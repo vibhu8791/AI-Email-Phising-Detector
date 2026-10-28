@@ -48,10 +48,12 @@ def test_live_api():
     print("Detected flags:", custom_data['detected_flags'])
     assert custom_data['classification'] == "PHISHING"
     
-    # 6. Test Google Auth URL endpoint
-    auth_res = requests.get(f"{base_url}/api/auth/google/url")
+    # 6. Test Google Auth status endpoint
+    auth_res = requests.get(f"{base_url}/api/auth/status")
     assert auth_res.status_code == 200
-    print("\nGoogle OAuth URL endpoint:", auth_res.json()["message"])
+    auth_data = auth_res.json()
+    print("\nGmail Auth Status:", auth_data)
+    assert "is_connected" in auth_data
     
     print("\nAll live end-to-end API tests PASSED!")
 

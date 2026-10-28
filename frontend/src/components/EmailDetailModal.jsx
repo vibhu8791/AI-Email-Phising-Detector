@@ -14,6 +14,7 @@ import {
   Cpu,
   Sliders
 } from 'lucide-react';
+import { formatEmailDateIST } from '../utils/dateFormatter';
 
 export default function EmailDetailModal({ email, onClose }) {
   const [viewTab, setViewTab] = useState('text'); // 'text' | 'html' | 'urls'
@@ -52,7 +53,7 @@ export default function EmailDetailModal({ email, onClose }) {
               </div>
               <div className="flex items-center space-x-1">
                 <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                <span>Date: <span className="text-slate-300">{email.date}</span></span>
+                <span>Date: <span className="text-slate-300">{formatEmailDateIST(email)}</span></span>
               </div>
             </div>
           </div>

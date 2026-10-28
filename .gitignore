@@ -44,6 +44,18 @@ wheels/
 # Database / Local storage containing sensitive tokens
 database/local_storage.json
 
+# Scratch files & temporary audit scripts
+scratch/
+
+# Large raw datasets and generated training splits
+ml_model/dataset/raw_ceas_08.csv
+ml_model/dataset/splits/
+ml_model/dataset/splits_grouped/
+
+# ML experiment backups and candidate models
+ml_model/backup/
+ml_model/candidate_models/
+
 # Logs
 *.log
 npm-debug.log*

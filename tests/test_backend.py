@@ -48,12 +48,51 @@ def test_analyzer():
         sender="hr-team@benefits-survey-portal.xyz",
         body="Please confirm your home address on http://benefits-survey-portal.xyz/login today."
     )
-    print("\n--- SUSPICIOUS TEST ---")
+    print("\n--- SUSPICIOUS / MALICIOUS TLD TEST ---")
     print(f"Classification: {susp_res['classification']}")
     print(f"Risk Score:     {susp_res['risk_score']}/100")
     assert susp_res['classification'] in ["SUSPICIOUS", "PHISHING"]
 
-    print("\nAll Analyzer assertions passed!")
+    # Test Legitimate Brand Alert (Zero False Positive Check)
+    google_res = analyzer.analyze(
+        subject="Security alert: New sign-in from Chrome on Windows",
+        sender="Google <no-reply@accounts.google.com>",
+        body="A new sign-in occurred on your Google Account from a Windows device. Review your devices at https://myaccount.google.com/device-activity immediately."
+    )
+    print("\n--- LEGITIMATE GOOGLE SECURITY ALERT (FALSE POSITIVE CHECK) ---")
+    print(f"Classification: {google_res['classification']}")
+    print(f"Risk Score:     {google_res['risk_score']}/100")
+    print(f"ML Probability: {google_res['ml_phishing_probability'] * 100:.1f}%")
+    assert google_res['classification'] == "SAFE", f"Expected SAFE for genuine Google alert, got {google_res['classification']}"
+    assert google_res['risk_score'] <= 35
+
+    # Test Urgent Corporate Legal Review (Urgency False Positive Check)
+    legal_res = analyzer.analyze(
+        subject="URGENT: Please review NDA draft by 5:00 PM today",
+        sender="Sarah Jenkins <legal@enterprise-corp.com>",
+        body="Hi Team, please find attached the revised mutual NDA for Project Horizon. We need legal signoff by 5:00 PM sharp to submit to the client."
+    )
+    print("\n--- LEGITIMATE URGENT BUSINESS EMAIL (FALSE POSITIVE CHECK) ---")
+    print(f"Classification: {legal_res['classification']}")
+    print(f"Risk Score:     {legal_res['risk_score']}/100")
+    print(f"ML Probability: {legal_res['ml_phishing_probability'] * 100:.1f}%")
+    assert legal_res['classification'] == "SAFE", f"Expected SAFE for genuine urgent business email, got {legal_res['classification']}"
+    assert legal_res['risk_score'] <= 35
+
+    # Test CEO BEC Wire Fraud (False Negative Check)
+    bec_res = analyzer.analyze(
+        subject="Immediate Wire Transfer Required - Confidential",
+        sender="Mark Zuckerberg <ceo-direct@vip-offices-global.com>",
+        body="I am currently in an urgent meeting with our acquisition partners. Please execute an immediate wire transfer of $45,000 to the attached vendor account today. Keep this strictly confidential."
+    )
+    print("\n--- CEO BEC WIRE FRAUD TEST ---")
+    print(f"Classification: {bec_res['classification']}")
+    print(f"Risk Score:     {bec_res['risk_score']}/100")
+    print(f"ML Probability: {bec_res['ml_phishing_probability'] * 100:.1f}%")
+    assert bec_res['classification'] == "PHISHING", f"Expected PHISHING for BEC wire fraud, got {bec_res['classification']}"
+    assert bec_res['risk_score'] >= 70
+
+    print("\nAll Analyzer assertions and False-Positive/False-Negative guardrails passed!")
 
 async def test_database():
     print("\nTesting Database Service...")

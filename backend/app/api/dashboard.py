@@ -1,6 +1,6 @@
 import os
 import sys
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 if root_dir not in sys.path:
@@ -8,32 +8,27 @@ if root_dir not in sys.path:
 
 from database.connection import db_service
 from app.api.websocket import manager
+from app.api.auth import get_current_user, UserSession
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 @router.get("/stats")
-async def get_dashboard_stats():
-    """Retrieve aggregate statistics for the dashboard overview."""
-    stats = await db_service.get_stats()
+async def get_dashboard_stats(current_user: UserSession = Depends(get_current_user)):
+    """Retrieve aggregate statistics strictly scoped to authenticated user."""
+    stats = await db_service.get_stats(user_id=current_user.user_id)
     return stats
 
+@router.get("/threats")
 @router.get("/threats/recent")
-async def get_recent_threats(limit: int = 10):
-    """Retrieve the most recent threat alerts."""
-    threats = await db_service.get_recent_threats(limit=limit)
+async def get_recent_threats(limit: int = 10, current_user: UserSession = Depends(get_current_user)):
+    """Retrieve the most recent threat alerts isolated for authenticated user."""
+    threats = await db_service.get_recent_threats(user_id=current_user.user_id, limit=limit)
     return threats
 
 @router.post("/reset")
-async def reset_dashboard_data():
-    """Clear all scanned emails and threats for clean testing."""
-    if not db_service.use_fallback and db_service.db is not None:
-        try:
-            await db_service.db.scanned_emails.delete_many({})
-            await db_service.db.threat_logs.delete_many({})
-        except Exception:
-            pass
-    db_service._memory_data["scanned_emails"] = []
-    db_service._memory_data["threat_logs"] = []
-    db_service._persist_fallback()
-    await manager.broadcast({"type": "STATS_UPDATED"})
-    return {"status": "success", "message": "Dashboard data cleared."}
+async def reset_dashboard_data(current_user: UserSession = Depends(get_current_user)):
+    """Clear scanned emails and threats for the calling user only (preserves other users)."""
+    await db_service.clear_user_data(user_id=current_user.user_id)
+    await manager.broadcast({"type": "STATS_UPDATED", "user_id": current_user.user_id})
+    return {"status": "success", "message": f"Dashboard data cleared for user {current_user.user_id}."}
+

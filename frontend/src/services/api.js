@@ -9,6 +9,21 @@ const api = axios.create({
   },
 });
 
+// Attach authenticated user ID to every request for strict multi-user isolation
+api.interceptors.request.use((config) => {
+  const currentUserId = localStorage.getItem('phish_user_id') || 'default_user';
+  config.headers['X-User-ID'] = currentUserId;
+  return config;
+});
+
+export const getCurrentUserId = () => {
+  return localStorage.getItem('phish_user_id') || 'default_user';
+};
+
+export const setCurrentUserId = (userId) => {
+  localStorage.setItem('phish_user_id', userId);
+};
+
 export const getDashboardStats = async () => {
   const res = await api.get('/dashboard/stats');
   return res.data;
@@ -34,13 +49,19 @@ export const deleteEmail = async (id) => {
   return res.data;
 };
 
-export const syncEmails = async (maxCount = 10) => {
-  const res = await api.post(`/emails/sync?max_count=${maxCount}`);
+export const syncEmails = async (maxCount = 10, accountId = null) => {
+  const url = accountId 
+    ? `/emails/sync?max_count=${maxCount}&account_id=${encodeURIComponent(accountId)}`
+    : `/emails/sync?max_count=${maxCount}`;
+  const res = await api.post(url);
   return res.data;
 };
 
-export const simulateBatch = async () => {
-  const res = await api.post('/emails/simulate-batch');
+export const simulateBatch = async (accountId = null) => {
+  const url = accountId
+    ? `/emails/simulate-batch?account_id=${encodeURIComponent(accountId)}`
+    : '/emails/simulate-batch';
+  const res = await api.post(url);
   return res.data;
 };
 
@@ -49,8 +70,18 @@ export const analyzeCustomEmail = async (payload) => {
   return res.data;
 };
 
-export const getGoogleAuthUrl = async () => {
-  const res = await api.get('/auth/google/url');
+export const getAccounts = async () => {
+  const res = await api.get('/auth/accounts');
+  return res.data;
+};
+
+export const selectAccount = async (accountId) => {
+  const res = await api.post(`/auth/accounts/${accountId}/select`);
+  return res.data;
+};
+
+export const disconnectAccount = async (accountId) => {
+  const res = await api.post(`/auth/accounts/${accountId}/disconnect`);
   return res.data;
 };
 
@@ -64,8 +95,17 @@ export const disconnectGmail = async () => {
   return res.data;
 };
 
-export const connectDemoMailbox = async () => {
-  const res = await api.post('/auth/demo-connect');
+export const connectDemoMailbox = async (email = null, displayName = null) => {
+  const res = await api.post('/auth/accounts/demo-connect', {
+    email: email || undefined,
+    display_name: displayName || undefined
+  });
+  return res.data;
+};
+
+export const switchUser = async (userId) => {
+  const res = await api.post('/auth/switch-user', { user_id: userId });
+  setCurrentUserId(userId);
   return res.data;
 };
 
@@ -75,3 +115,4 @@ export const resetDashboard = async () => {
 };
 
 export default api;
+

@@ -11,7 +11,7 @@ root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.pa
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
-from ml_model.feature_extractor import extract_heuristic_features
+from ml_model.feature_extractor import extract_heuristic_features, preprocess_email_text
 
 class PhishingAnalyzer:
     def __init__(self):
@@ -51,8 +51,9 @@ class PhishingAnalyzer:
             return 0.5
         try:
             vec = self.vectorizer.transform([text])
-            # Index 1 is the 'phishing' class probability
-            prob = float(self.model.predict_proba(vec)[0][1])
+            # Dynamically resolve index for class 1 (phishing)
+            phish_idx = list(self.model.classes_).index(1) if hasattr(self.model, 'classes_') else 1
+            prob = float(self.model.predict_proba(vec)[0][phish_idx])
             return prob
         except Exception as e:
             logger.error(f"Prediction error: {e}")
@@ -67,10 +68,11 @@ class PhishingAnalyzer:
         subject = subject or ""
         sender = sender or ""
         body = body or ""
-        combined_text = f"{subject} {sender} {body}"
 
-        # 1. Scikit-learn TF-IDF + Logistic Regression Prediction
-        ml_prob = self.predict_ml_probability(combined_text)
+        # 1. Scikit-learn TF-IDF + Calibrated Linear SVM / Logistic Regression
+        # Use identical unified preprocessing pipeline as used during training
+        preprocessed_text = preprocess_email_text(subject, sender, body)
+        ml_prob = self.predict_ml_probability(preprocessed_text)
 
         # 2. Heuristic & Rule-Based Feature Analysis
         heuristic_res = extract_heuristic_features(subject, sender, body)
@@ -78,8 +80,8 @@ class PhishingAnalyzer:
         detected_flags = list(heuristic_res["detected_flags"])
 
         # 3. Phishing Risk Score Calculation (0 - 100)
-        # 60% weight from ML Model, 40% weight from Heuristics
-        base_score = (ml_prob * 60.0) + (heuristic_score * 0.40)
+        # Balanced Alignment: 70% weight from ML Model, 30% weight from Heuristics
+        base_score = (ml_prob * 70.0) + (heuristic_score * 0.30)
 
         # High-threat heuristic boost (e.g. raw IP domain or severe sender spoofing)
         if any("raw IP address" in flag for flag in detected_flags):

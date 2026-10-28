@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Filter
 } from 'lucide-react';
+import { formatEmailDateIST } from '../utils/dateFormatter';
 
 export default function EmailList({ emails, loading, onInspect, onDelete, onFilterChange, currentFilter, searchQuery, onSearchChange }) {
   const filterOptions = [
@@ -166,7 +167,7 @@ export default function EmailList({ emails, loading, onInspect, onDelete, onFilt
 
                     {/* Date */}
                     <td className="py-3.5 px-4 whitespace-nowrap text-slate-400 text-[11px]">
-                      {email.date ? email.date.slice(0, 16) : 'Recent'}
+                      {formatEmailDateIST(email)}
                     </td>
 
                     {/* Actions */}

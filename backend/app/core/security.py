@@ -1,6 +1,10 @@
 import base64
 import hashlib
+import json
 import logging
+import time
+import uuid
+from typing import Optional, Dict, Any
 from cryptography.fernet import Fernet
 from app.core.config import settings
 
@@ -34,3 +38,32 @@ def decrypt_token(encrypted_token: str) -> str:
     except Exception as e:
         logger.error(f"Error decrypting token: {e}")
         return encrypted_token
+
+def generate_oauth_state(user_id: str = "default_user") -> str:
+    """
+    Generate a tamper-proof, time-bound OAuth state token bound to the requesting user_id.
+    Prevents CSRF and links callback securely to the initiating user.
+    """
+    payload = {
+        "user_id": user_id,
+        "nonce": uuid.uuid4().hex,
+        "created_at": time.time()
+    }
+    encoded_json = json.dumps(payload).encode('utf-8')
+    return _cipher.encrypt(encoded_json).decode('utf-8')
+
+def verify_oauth_state(state: str, max_age_seconds: int = 600) -> Optional[Dict[str, Any]]:
+    """
+    Verify and decode the OAuth state token.
+    Enforces maximum age (default 10 minutes) and integrity.
+    """
+    if not state:
+        return None
+    try:
+        decrypted_bytes = _cipher.decrypt(state.encode('utf-8'), ttl=max_age_seconds)
+        data = json.loads(decrypted_bytes.decode('utf-8'))
+        return data
+    except Exception as e:
+        logger.warning(f"Invalid or expired OAuth state parameter: {e}")
+        return None
+
