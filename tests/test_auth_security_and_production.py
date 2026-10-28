@@ -255,5 +255,63 @@ class TestAuthSecurityAndProduction(unittest.TestCase):
         finally:
             settings.GOOGLE_CLIENT_ID = orig_client_id
 
+    def test_12_production_oauth_redirect_and_guard(self):
+        """Verify production OAuth configuration guards and automatic Render URL derivation."""
+        orig_env = settings.ENVIRONMENT
+        orig_raw_google = settings.RAW_GOOGLE_REDIRECT_URI
+        orig_raw_frontend = settings.RAW_FRONTEND_REDIRECT_URL
+        orig_render_url = os.environ.get("RENDER_EXTERNAL_URL")
+        orig_render = os.environ.get("RENDER")
+
+        try:
+            # 1. Development mode defaults to localhost safely
+            settings.ENVIRONMENT = "development"
+            settings.RAW_GOOGLE_REDIRECT_URI = None
+            settings.RAW_FRONTEND_REDIRECT_URL = None
+            os.environ.pop("RENDER_EXTERNAL_URL", None)
+            os.environ.pop("RENDER", None)
+            self.assertEqual(settings.GOOGLE_REDIRECT_URI, "http://localhost:8000/api/auth/google/callback")
+            self.assertEqual(settings.FRONTEND_REDIRECT_URL, "http://localhost:5173")
+
+            # 2. Render environment automatically derives production URLs
+            os.environ["RENDER_EXTERNAL_URL"] = "https://phishshield-api-xgbd.onrender.com"
+            os.environ["RENDER"] = "true"
+            self.assertEqual(settings.GOOGLE_REDIRECT_URI, "https://phishshield-api-xgbd.onrender.com/api/auth/google/callback")
+            self.assertEqual(settings.FRONTEND_REDIRECT_URL, "https://ai-email-phising-detector.onrender.com")
+
+            # 3. Production mode without Render URL or explicit HTTPS raises RuntimeError on localhost
+            os.environ.pop("RENDER_EXTERNAL_URL", None)
+            os.environ.pop("RENDER", None)
+            settings.ENVIRONMENT = "production"
+            settings.RAW_GOOGLE_REDIRECT_URI = "http://localhost:8000/api/auth/google/callback"
+            with self.assertRaises(RuntimeError) as cm:
+                _ = settings.GOOGLE_REDIRECT_URI
+            self.assertIn("cannot point to localhost", str(cm.exception))
+
+            settings.RAW_FRONTEND_REDIRECT_URL = "http://localhost:5173"
+            with self.assertRaises(RuntimeError) as cm_fe:
+                _ = settings.FRONTEND_REDIRECT_URL
+            self.assertIn("cannot point to localhost", str(cm_fe.exception))
+
+            # 4. Verified production OAuth initiation uses canonical production callback URL
+            settings.RAW_GOOGLE_REDIRECT_URI = "https://phishshield-api-xgbd.onrender.com/api/auth/google/callback"
+            settings.RAW_FRONTEND_REDIRECT_URL = "https://ai-email-phising-detector.onrender.com"
+            settings.GOOGLE_CLIENT_ID = "prod_client_id.apps.googleusercontent.com"
+            res = self.client.get("/api/auth/google/login?prompt=select_account", follow_redirects=False)
+            self.assertEqual(res.status_code, 307)
+            self.assertIn("redirect_uri=https://phishshield-api-xgbd.onrender.com/api/auth/google/callback", res.headers["location"])
+        finally:
+            settings.ENVIRONMENT = orig_env
+            settings.RAW_GOOGLE_REDIRECT_URI = orig_raw_google
+            settings.RAW_FRONTEND_REDIRECT_URL = orig_raw_frontend
+            if orig_render_url is not None:
+                os.environ["RENDER_EXTERNAL_URL"] = orig_render_url
+            else:
+                os.environ.pop("RENDER_EXTERNAL_URL", None)
+            if orig_render is not None:
+                os.environ["RENDER"] = orig_render
+            else:
+                os.environ.pop("RENDER", None)
+
 if __name__ == "__main__":
     unittest.main()

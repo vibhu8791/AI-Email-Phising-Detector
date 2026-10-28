@@ -183,6 +183,11 @@ async def google_login(
     if not settings.GOOGLE_CLIENT_ID or settings.GOOGLE_CLIENT_ID == "YOUR_GOOGLE_CLIENT_ID":
         return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=MissingClientID")
 
+    # In production mode, ensure GOOGLE_REDIRECT_URI does not point to localhost
+    if settings.is_production and any(loc in settings.GOOGLE_REDIRECT_URI for loc in ("localhost", "127.0.0.1")):
+        logger.error(f"Cannot initiate Google OAuth: GOOGLE_REDIRECT_URI points to localhost in production: {settings.GOOGLE_REDIRECT_URI}")
+        return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=LocalhostRedirectInProduction")
+
     # Determine initiating user identity
     active_user = current_user
     if not active_user and token:

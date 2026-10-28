@@ -27,7 +27,9 @@ logger = logging.getLogger("app.main")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info(f"Starting up {settings.PROJECT_NAME} in '{settings.ENVIRONMENT}' environment...")
+    logger.info(f"Starting up {settings.PROJECT_NAME} in '{settings.ENVIRONMENT}' environment (is_production={settings.is_production})...")
+    logger.info(f"Resolved Google OAuth Redirect URI: {settings.GOOGLE_REDIRECT_URI}")
+    logger.info(f"Resolved Frontend Redirect URL: {settings.FRONTEND_REDIRECT_URL}")
     # Initialize DB connection (enforces persistent MongoDB in production)
     await db_service.connect(settings.MONGODB_URL, settings.DATABASE_NAME)
     # Ensure ML model is loaded
