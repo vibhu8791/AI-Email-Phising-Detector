@@ -13,7 +13,7 @@ import {
   Sparkles,
   AlertTriangle
 } from 'lucide-react';
-import { getGoogleAuthUrl, disconnectGmail, connectDemoMailbox } from '../services/api';
+import { getGoogleLoginUrl, disconnectGmail, connectDemoMailbox } from '../services/api';
 
 export default function Navbar({ 
   stats, 
@@ -31,7 +31,7 @@ export default function Navbar({
 
   const handleConnectGoogle = () => {
     // Redirect directly to the backend login endpoint which initiates the Google OAuth flow
-    window.location.href = "http://localhost:8000/api/auth/google/login";
+    window.location.href = getGoogleLoginUrl('select_account');
   };
 
   const handleConnectDemo = async () => {

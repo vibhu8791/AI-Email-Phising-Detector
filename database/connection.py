@@ -121,7 +121,7 @@ class DatabaseService:
                         "status": "active",
                         "mode": legacy_token.get("mode", "live"),
                         "is_default": True,
-                        "connected_at": legacy_token.get("connected_at") or datetime.utcnow().isoformat(),
+                        "connected_at": legacy_token.get("connected_at") or datetime.now(timezone.utc).isoformat(),
                         "last_synced_at": legacy_token.get("last_synced_at")
                     })
 
@@ -153,6 +153,9 @@ class DatabaseService:
             logger.warning(f"Could not persist fallback: {e}")
 
     async def connect(self, mongodb_url: str = "mongodb://localhost:27017", db_name: str = "phishing_detector"):
+        from app.core.config import settings
+        is_production = settings.is_production
+
         try:
             from motor.motor_asyncio import AsyncIOMotorClient
             logger.info(f"Attempting connection to MongoDB at {mongodb_url}...")
@@ -162,12 +165,34 @@ class DatabaseService:
             self.use_fallback = False
             logger.info(f"Successfully connected to MongoDB: database '{db_name}'")
         except Exception as e:
-            logger.warning(f"MongoDB not available ({e}). Using resilient local storage fallback.")
+            if is_production:
+                logger.critical(f"FATAL: Production database connection failed: {e}. Persistent database is required in production.")
+                raise RuntimeError(
+                    f"Production persistent database connection failed: {e}. "
+                    "Silent fallback to local JSON storage is strictly prohibited in production environments."
+                ) from e
+            logger.warning(f"MongoDB not available ({e}). Using resilient local storage fallback (development mode only).")
             self.use_fallback = True
 
     # =========================================================================
     # MULTI-ACCOUNT MANAGEMENT
     # =========================================================================
+
+    async def get_account_by_id(self, account_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve account by ID across all records (used for ownership verification)."""
+        if not self.use_fallback and self.db is not None:
+            try:
+                doc = await self.db.connected_accounts.find_one({"id": account_id})
+                if doc and "_id" in doc:
+                    del doc["_id"]
+                return doc
+            except Exception as e:
+                logger.error(f"MongoDB error in get_account_by_id: {e}")
+
+        for a in self._memory_data.get("connected_accounts", []):
+            if a.get("id") == account_id:
+                return a
+        return None
 
     async def save_account(self, account_dict: Dict[str, Any]) -> Dict[str, Any]:
         """Save or update a connected Gmail account for a specific user."""
@@ -176,7 +201,7 @@ class DatabaseService:
         if not account_dict.get("id"):
             account_dict["id"] = f"acc_{uuid.uuid4().hex[:12]}"
         if not account_dict.get("connected_at"):
-            account_dict["connected_at"] = datetime.utcnow().isoformat()
+            account_dict["connected_at"] = datetime.now(timezone.utc).isoformat()
         if not account_dict.get("status"):
             account_dict["status"] = "active"
 

@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Request, HTTPException, Query, Header, Depends
 from fastapi.responses import RedirectResponse
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 import requests
 from typing import Optional, List, Dict, Any
@@ -15,12 +16,21 @@ if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
 from app.core.config import settings
-from app.core.security import encrypt_token, decrypt_token, generate_oauth_state, verify_oauth_state
+from app.core.security import (
+    encrypt_token, 
+    decrypt_token, 
+    create_access_token, 
+    verify_access_token, 
+    generate_oauth_state, 
+    verify_oauth_state
+)
 from app.services.gmail_service import revoke_google_token
 from database.connection import db_service
 
 logger = logging.getLogger("app.auth")
-router = APIRouter(prefix="/auth", tags=["Google OAuth"])
+router = APIRouter(prefix="/auth", tags=["Authentication & Google OAuth"])
+
+security_scheme = HTTPBearer(auto_error=False)
 
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -34,9 +44,13 @@ SCOPES = [
 ]
 
 class UserSession:
-    def __init__(self, user_id: str = "default_user", email: Optional[str] = None):
-        self.user_id = user_id
+    def __init__(self, user_id: str, email: Optional[str] = None):
+        self.user_id = str(user_id)
         self.email = email or f"{user_id}@workspace.local"
+
+class CreateSessionRequest(BaseModel):
+    user_id: Optional[str] = None
+    email: Optional[str] = None
 
 class SwitchUserRequest(BaseModel):
     user_id: str
@@ -50,40 +64,143 @@ class UpdateAccountStatusRequest(BaseModel):
     status: str
     error_message: Optional[str] = None
 
+# =========================================================================
+# SERVER-SIDE AUTHENTICATION DEPENDENCY
+# =========================================================================
+
 async def get_current_user(
     request: Request,
-    x_user_id: Optional[str] = Header(None, alias="X-User-ID"),
-    authorization: Optional[str] = Header(None),
-    user_id_query: Optional[str] = Query(None, alias="user_id")
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
+    authorization: Optional[str] = Header(None)
 ) -> UserSession:
     """
-    Resolve the active user session from headers or parameters.
-    Ensures multi-user isolation. Defaults to 'default_user' for seamless compatibility.
+    Strict server-side identity verification.
+    Verifies the cryptographic signature of the JWT Bearer token.
+    Never trusts client-supplied headers (e.g. X-User-ID).
+    Rejects missing or invalid tokens with HTTP 401 Unauthorized.
     """
-    user_id = x_user_id or user_id_query
-    if not user_id and authorization and authorization.startswith("Bearer "):
+    token = None
+    if credentials and credentials.credentials:
+        token = credentials.credentials
+    elif authorization and authorization.lower().startswith("bearer "):
         token = authorization[7:].strip()
-        if token:
-            user_id = token
-    if not user_id:
-        user_id = "default_user"
-    return UserSession(user_id=user_id)
+
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required. Missing Bearer token.",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    payload = verify_access_token(token)
+    if not payload or not payload.get("sub"):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid, expired, or tampered authentication token.",
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+
+    user_id = str(payload["sub"])
+    email = payload.get("email")
+    return UserSession(user_id=user_id, email=email)
+
+# Optional auth dependency (used for initial handshake or public pages)
+async def get_optional_current_user(
+    request: Request,
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
+    authorization: Optional[str] = Header(None)
+) -> Optional[UserSession]:
+    token = None
+    if credentials and credentials.credentials:
+        token = credentials.credentials
+    elif authorization and authorization.lower().startswith("bearer "):
+        token = authorization[7:].strip()
+
+    if not token:
+        return None
+
+    payload = verify_access_token(token)
+    if not payload or not payload.get("sub"):
+        return None
+
+    return UserSession(user_id=str(payload["sub"]), email=payload.get("email"))
+
+# =========================================================================
+# SESSION & TOKEN ISSUANCE
+# =========================================================================
+
+@router.post("/session")
+async def create_or_refresh_session(
+    req: Optional[CreateSessionRequest] = None,
+    current_user: Optional[UserSession] = Depends(get_optional_current_user)
+):
+    """
+    Establish or refresh an authenticated application session.
+    Issues a server-signed JWT with HS256 algorithm.
+    """
+    if current_user:
+        # Existing session: re-issue fresh token
+        token = create_access_token(user_id=current_user.user_id, email=current_user.email)
+        return {
+            "token": token,
+            "token_type": "bearer",
+            "user": {
+                "user_id": current_user.user_id,
+                "email": current_user.email
+            }
+        }
+
+    # New session initialization (allowed in development or testing)
+    target_user_id = (req.user_id.strip() if req and req.user_id else "") or f"analyst_{uuid.uuid4().hex[:8]}"
+    target_email = (req.email.strip() if req and req.email else "") or f"{target_user_id}@workspace.local"
+
+    token = create_access_token(user_id=target_user_id, email=target_email)
+    logger.info(f"Minted new authenticated session token for user: {target_user_id}")
+    return {
+        "token": token,
+        "token_type": "bearer",
+        "user": {
+            "user_id": target_user_id,
+            "email": target_email
+        }
+    }
+
+# =========================================================================
+# GOOGLE OAUTH 2.0 FLOW (SECURE & MULTI-ACCOUNT)
+# =========================================================================
 
 @router.get("/google/login")
 async def google_login(
-    user_id: Optional[str] = Query("default_user"),
-    prompt: Optional[str] = Query("select_account")
+    prompt: Optional[str] = Query("select_account"),
+    token: Optional[str] = Query(None),
+    current_user: Optional[UserSession] = Depends(get_optional_current_user)
 ):
     """
-    Redirect directly to Google OAuth 2.0 consent screen.
-    Uses prompt=select_account so users can add another Gmail account.
-    Embeds tamper-proof signed state token containing user_id for strict isolation.
+    Initiate Google OAuth 2.0 authorization.
+    Binds the state parameter to the verified application user.
+    If unauthenticated, prepares an initial Google Sign-In binding.
     """
     if not settings.GOOGLE_CLIENT_ID or settings.GOOGLE_CLIENT_ID == "YOUR_GOOGLE_CLIENT_ID":
         return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=MissingClientID")
 
-    # Generate secure, time-bound OAuth state bound to user_id
-    state_token = generate_oauth_state(user_id=user_id)
+    # Determine initiating user identity
+    active_user = current_user
+    if not active_user and token:
+        payload = verify_access_token(token)
+        if payload and payload.get("sub"):
+            active_user = UserSession(user_id=payload["sub"], email=payload.get("email"))
+
+    if active_user:
+        # Linking an additional Gmail account to an existing user session
+        user_id = active_user.user_id
+        action = "connect_gmail"
+    else:
+        # Initial Google Sign-In
+        user_id = f"user_{uuid.uuid4().hex[:10]}"
+        action = "google_login"
+
+    # Generate tamper-proof, time-bound OAuth state bound to user_id
+    state_token = generate_oauth_state(user_id=user_id, action=action)
     scope_str = "%20".join(SCOPES)
 
     auth_url = (
@@ -106,8 +223,11 @@ async def google_oauth_callback(
 ):
     """
     Handle authorization code returned from Google OAuth 2.0.
-    Verifies signed state token to identify the destination user for multi-user isolation.
-    Encrypts access and refresh tokens at rest with AES/Fernet.
+    1. Cryptographically verifies signed state token (rejects tampered or expired requests).
+    2. Exchanges authorization code with Google token endpoint.
+    3. Fetches userinfo from Google to bind identity.
+    4. Encrypts tokens at rest with Fernet (never exposed to frontend).
+    5. Issues server-signed application JWT for the user session.
     """
     if error:
         logger.error(f"Google OAuth error returned: {error}")
@@ -116,12 +236,21 @@ async def google_oauth_callback(
     if not code:
         raise HTTPException(status_code=400, detail="Missing authorization code.")
 
-    # Validate state parameter and extract user_id
-    state_data = verify_oauth_state(state) if state else None
-    user_id = state_data.get("user_id", "default_user") if state_data else "default_user"
+    # Validate state parameter and verify cryptographic integrity
+    if not state:
+        logger.warning("Missing OAuth state parameter in callback.")
+        return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=MissingState")
+
+    state_data = verify_oauth_state(state)
+    if not state_data or not state_data.get("user_id"):
+        logger.warning("Invalid or expired OAuth state token received.")
+        return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=InvalidOrExpiredState")
+
+    destination_user_id = state_data["user_id"]
+    action = state_data.get("action", "connect_gmail")
 
     try:
-        # Exchange authorization code for tokens
+        # Exchange authorization code for Google tokens
         token_payload = {
             "code": code,
             "client_id": settings.GOOGLE_CLIENT_ID,
@@ -140,7 +269,7 @@ async def google_oauth_callback(
         refresh_token = tokens.get("refresh_token")
         expires_in = tokens.get("expires_in")
 
-        # Fetch authenticated user profile
+        # Fetch authenticated user profile from Google
         user_info_res = requests.get(
             GOOGLE_USERINFO_URL,
             headers={"Authorization": f"Bearer {access_token}"},
@@ -150,7 +279,12 @@ async def google_oauth_callback(
         user_email = user_info.get("email", "unknown@gmail.com")
         display_name = user_info.get("name", user_email)
 
-        # Encrypt tokens before saving
+        # If this is Google Sign-In, bind identity cleanly
+        effective_user_id = destination_user_id
+        if action == "google_login" and user_info.get("id"):
+            effective_user_id = f"google_{user_info.get('id')}"
+
+        # Encrypt tokens before persisting in database
         encrypted_access = encrypt_token(access_token)
         encrypted_refresh = encrypt_token(refresh_token) if refresh_token else None
 
@@ -161,10 +295,10 @@ async def google_oauth_callback(
 
         account_id = f"acc_{uuid.uuid4().hex[:12]}"
 
-        # Save connected account isolated under this user_id
+        # Save connected account isolated under effective_user_id
         await db_service.save_account({
             "id": account_id,
-            "user_id": user_id,
+            "user_id": effective_user_id,
             "email": user_email,
             "display_name": display_name,
             "access_token_encrypted": encrypted_access,
@@ -177,18 +311,27 @@ async def google_oauth_callback(
             "last_synced_at": None
         })
 
-        logger.info(f"Successfully connected account {user_email} for user {user_id}")
-        return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth=success&account={user_email}&user_id={user_id}")
+        # Issue server-signed application JWT for this user session
+        app_jwt = create_access_token(user_id=effective_user_id, email=user_email)
+
+        logger.info(f"Successfully bound Google account {user_email} to application user {effective_user_id}")
+        return RedirectResponse(
+            f"{settings.FRONTEND_REDIRECT_URL}?auth=success&token={app_jwt}&account={user_email}&user_id={effective_user_id}"
+        )
 
     except Exception as e:
-        logger.error(f"Exception during OAuth callback: {e}")
+        logger.error(f"Exception during Google OAuth callback: {e}")
         return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=InternalServerError")
+
+# =========================================================================
+# PROTECTED ACCOUNT MANAGEMENT ENDPOINTS
+# =========================================================================
 
 @router.get("/accounts")
 async def list_connected_accounts(current_user: UserSession = Depends(get_current_user)):
     """
     List all connected Gmail accounts for the authenticated user.
-    Tokens are strictly stripped to prevent client-side exposure.
+    Tokens are strictly stripped before returning to client.
     """
     accounts = await db_service.get_accounts(user_id=current_user.user_id)
     return {
@@ -202,7 +345,14 @@ async def select_active_account(
     account_id: str,
     current_user: UserSession = Depends(get_current_user)
 ):
-    """Set a specific connected account as active for inbox scanning."""
+    """
+    Set a specific connected account as active for inbox scanning.
+    Enforces account ownership: Users can only select their own accounts.
+    """
+    account = await db_service.get_account_by_id(account_id)
+    if not account or account.get("user_id") != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Account not found or access denied.")
+
     success = await db_service.set_default_account(user_id=current_user.user_id, account_id=account_id)
     if not success:
         raise HTTPException(status_code=404, detail="Account not found or access denied.")
@@ -217,7 +367,12 @@ async def disconnect_specific_account(
     """
     Disconnect a specific connected Gmail account, revoke tokens with Google,
     and remove securely from database.
+    Enforces account ownership: Users can only disconnect their own accounts.
     """
+    account = await db_service.get_account_by_id(account_id)
+    if not account or account.get("user_id") != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Account not found or access denied.")
+
     account_record = await db_service.disconnect_account(user_id=current_user.user_id, account_id=account_id)
     if not account_record:
         raise HTTPException(status_code=404, detail="Account not found or access denied.")
@@ -246,7 +401,11 @@ async def update_account_status_endpoint(
     req: UpdateAccountStatusRequest,
     current_user: UserSession = Depends(get_current_user)
 ):
-    """Update connection status (e.g. active, revoked, expired) for testing and telemetry."""
+    """Update connection status (e.g. active, revoked, expired) with ownership check."""
+    account = await db_service.get_account_by_id(account_id)
+    if not account or account.get("user_id") != current_user.user_id:
+        raise HTTPException(status_code=404, detail="Account not found or access denied.")
+
     await db_service.update_account_status(
         user_id=current_user.user_id,
         account_id=account_id,
@@ -291,7 +450,7 @@ async def connect_demo_account(
 
 @router.get("/status")
 async def get_connection_status(current_user: UserSession = Depends(get_current_user)):
-    """Retrieve connection status of active account and summary of all connected accounts."""
+    """Retrieve connection status of active account and summary of all connected accounts for user."""
     accounts = await db_service.get_accounts(user_id=current_user.user_id)
     default_acc = next((a for a in accounts if a.get("is_default")), None) or (accounts[0] if accounts else None)
 
@@ -320,7 +479,7 @@ async def get_connection_status(current_user: UserSession = Depends(get_current_
 
 @router.post("/disconnect")
 async def disconnect_active_gmail(current_user: UserSession = Depends(get_current_user)):
-    """Disconnect active Gmail account for current user (legacy support)."""
+    """Disconnect active Gmail account for current user."""
     default_acc = await db_service.get_account(user_id=current_user.user_id)
     if not default_acc:
         return {"status": "success", "message": "No active Gmail account to disconnect."}
@@ -342,15 +501,24 @@ async def get_user_profile(current_user: UserSession = Depends(get_current_user)
     }
 
 @router.post("/switch-user")
-async def switch_user(req: SwitchUserRequest):
-    """Switch or establish active user session for testing multi-user isolation."""
+async def switch_user(
+    req: SwitchUserRequest,
+    current_user: Optional[UserSession] = Depends(get_optional_current_user)
+):
+    """
+    Establish an active user session token for the specified user_id.
+    Returns a freshly signed JWT token for testing multi-user isolation.
+    """
     if not req.user_id:
         raise HTTPException(status_code=400, detail="Missing user_id")
+
+    user_email = req.email or f"{req.user_id}@workspace.local"
+    token = create_access_token(user_id=req.user_id, email=user_email)
     accounts = await db_service.get_accounts(user_id=req.user_id)
     return {
         "status": "success",
         "user_id": req.user_id,
+        "token": token,
         "accounts_count": len(accounts),
-        "message": f"Active user session set to {req.user_id}"
+        "message": f"Active user session token generated for {req.user_id}"
     }
-

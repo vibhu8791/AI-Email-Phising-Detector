@@ -15,7 +15,13 @@ backend_dir = os.path.join(root_dir, "backend")
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-from app.core.security import encrypt_token, decrypt_token, generate_oauth_state, verify_oauth_state
+from app.core.security import (
+    encrypt_token, 
+    decrypt_token, 
+    generate_oauth_state, 
+    verify_oauth_state,
+    create_access_token
+)
 from app.api.auth import SCOPES
 from database.connection import db_service
 
@@ -36,8 +42,10 @@ class TestMultiAccountAndIsolation(unittest.TestCase):
 
         cls.user_a = f"user_a_{uuid.uuid4().hex[:6]}"
         cls.user_b = f"user_b_{uuid.uuid4().hex[:6]}"
-        cls.headers_a = {"X-User-ID": cls.user_a}
-        cls.headers_b = {"X-User-ID": cls.user_b}
+        cls.token_a = create_access_token(user_id=cls.user_a)
+        cls.token_b = create_access_token(user_id=cls.user_b)
+        cls.headers_a = {"Authorization": f"Bearer {cls.token_a}"}
+        cls.headers_b = {"Authorization": f"Bearer {cls.token_b}"}
 
     @classmethod
     def _start_test_server(cls, port=8001):
@@ -236,7 +244,8 @@ class TestMultiAccountAndIsolation(unittest.TestCase):
     def test_07_revoked_or_expired_token_handling(self):
         """Requirement 7: Gracefully handle expired or revoked tokens with 401 and clean status."""
         temp_user = f"temp_user_{uuid.uuid4().hex[:6]}"
-        headers_temp = {"X-User-ID": temp_user}
+        temp_token = create_access_token(user_id=temp_user)
+        headers_temp = {"Authorization": f"Bearer {temp_token}"}
 
         conn_res = requests.post(f"{self.BASE_URL}/api/auth/accounts/demo-connect", headers=headers_temp, json={
             "email": "revoked_account@gmail.com"

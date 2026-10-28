@@ -12,7 +12,7 @@ import {
   Plus,
   UserCheck
 } from 'lucide-react';
-import { disconnectGmail, selectAccount, getCurrentUserId } from '../services/api';
+import { disconnectGmail, selectAccount, getCurrentUserId, getGoogleLoginUrl } from '../services/api';
 
 export default function TopHeader({ 
   stats, 
@@ -32,7 +32,7 @@ export default function TopHeader({
   const connectedAccounts = stats?.connected_accounts || [];
 
   const handleConnectGoogle = () => {
-    window.location.href = `http://localhost:8000/api/auth/google/login?user_id=${encodeURIComponent(currentUserId)}&prompt=select_account`;
+    window.location.href = getGoogleLoginUrl('select_account');
   };
 
   const handleDisconnect = async () => {

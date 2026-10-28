@@ -13,6 +13,10 @@ import SettingsView from './components/SettingsView';
 import SandboxScanner from './components/SandboxScanner';
 import PhishingAlertModal from './components/PhishingAlertModal';
 import EmailDetailModal from './components/EmailDetailModal';
+
+// Lazily loaded legal compliance views with ad-blocker immune component names
+const DataProtectionNotice = React.lazy(() => import('./components/DataProtectionNotice'));
+const ServiceTermsNotice = React.lazy(() => import('./components/ServiceTermsNotice'));
 import { 
   getDashboardStats, 
   getEmails, 
@@ -20,7 +24,10 @@ import {
   syncEmails, 
   simulateBatch, 
   deleteEmail,
-  resetDashboard 
+  resetDashboard,
+  initSession,
+  setStoredToken,
+  setCurrentUserId
 } from './services/api';
 import { wsClient } from './services/websocket';
 import { RefreshCw, Zap } from 'lucide-react';
@@ -88,10 +95,18 @@ export default function App() {
     const params = new URLSearchParams(window.location.search);
     const authError = params.get('auth_error');
     const authSuccess = params.get('auth');
+    const authToken = params.get('token');
+    const authUserId = params.get('user_id');
     const authAccount = params.get('account') || params.get('email');
+
+    if (authToken) {
+      setStoredToken(authToken);
+      if (authUserId) setCurrentUserId(authUserId);
+    }
+
     if (authError) {
       if (authError === 'MissingClientID') {
-        alert("Cannot connect to Google: You must first add your GOOGLE_CLIENT_ID to the backend/.env file.");
+        alert("Cannot connect to Google: You must first add your GOOGLE_CLIENT_ID to your environment.");
       } else {
         alert(`Google Authentication failed: ${authError}`);
       }
@@ -101,9 +116,18 @@ export default function App() {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-    fetchStats();
-    fetchEmails();
-    fetchThreats();
+    // Initialize authenticated server session and then fetch data
+    const initializeData = async () => {
+      try {
+        await initSession();
+        await fetchStats();
+        await fetchEmails();
+        await fetchThreats();
+      } catch (err) {
+        console.error("Session initialization error:", err);
+      }
+    };
+    initializeData();
 
     // Start WebSocket
     wsClient.connect();
@@ -337,6 +361,18 @@ export default function App() {
               }}
               onReset={handleReset}
             />
+          )}
+
+          {activeTab === 'privacy' && (
+            <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-500 font-medium">Loading Privacy Policy...</div>}>
+              <DataProtectionNotice onBack={() => setActiveTab('dashboard')} />
+            </React.Suspense>
+          )}
+
+          {activeTab === 'terms' && (
+            <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-500 font-medium">Loading Terms of Service...</div>}>
+              <ServiceTermsNotice onBack={() => setActiveTab('dashboard')} />
+            </React.Suspense>
           )}
         </main>
       </div>

@@ -1,3 +1,5 @@
+import { getStoredToken } from './api';
+
 class ThreatWebSocket {
   constructor() {
     this.ws = null;
@@ -8,12 +10,33 @@ class ThreatWebSocket {
     this.pingInterval = null;
   }
 
+  getWebSocketUrl() {
+    if (import.meta.env.VITE_WS_URL) {
+      return import.meta.env.VITE_WS_URL;
+    }
+
+    if (typeof window !== 'undefined') {
+      const isHttps = window.location.protocol === 'https:';
+      const protocol = isHttps ? 'wss:' : 'ws:';
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      const host = isLocal ? '127.0.0.1:8000' : window.location.host;
+      return `${protocol}//${host}/ws/alerts`;
+    }
+
+    return 'ws://127.0.0.1:8000/ws/alerts';
+  }
+
   connect() {
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
 
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000/ws/alerts';
+    let wsUrl = this.getWebSocketUrl();
+    const token = getStoredToken();
+    if (token) {
+      const separator = wsUrl.includes('?') ? '&' : '?';
+      wsUrl = `${wsUrl}${separator}token=${encodeURIComponent(token)}`;
+    }
     
     try {
       this.ws = new WebSocket(wsUrl);
@@ -21,7 +44,7 @@ class ThreatWebSocket {
       this.ws.onopen = () => {
         this.isConnected = true;
         this.notifyStatus(true);
-        // Start ping heartbeat
+        // Start ping heartbeat (25s interval)
         this.pingInterval = setInterval(() => {
           if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send('ping');

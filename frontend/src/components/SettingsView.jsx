@@ -22,7 +22,8 @@ import {
   connectDemoMailbox,
   getCurrentUserId,
   setCurrentUserId,
-  switchUser
+  switchUser,
+  getGoogleLoginUrl
 } from '../services/api';
 import { formatEmailDateIST } from '../utils/dateFormatter';
 
@@ -49,9 +50,8 @@ export default function SettingsView({ stats, wsConnected, onRefresh, onReset })
   }, []);
 
   const handleConnectGoogle = () => {
-    const currentUserId = getCurrentUserId();
-    // Pass user_id and prompt=select_account so Google presents the account chooser
-    window.location.href = `http://localhost:8000/api/auth/google/login?user_id=${encodeURIComponent(currentUserId)}&prompt=select_account`;
+    // Pass prompt=select_account so Google presents the account chooser for adding another account
+    window.location.href = getGoogleLoginUrl('select_account');
   };
 
   const handleSelectActive = async (accountId) => {
@@ -403,7 +403,7 @@ export default function SettingsView({ stats, wsConnected, onRefresh, onReset })
             <div className="flex items-center space-x-2 mt-0.5">
               <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-emerald-500' : 'bg-amber-500'}`} />
               <span className="font-bold text-slate-900 font-mono">
-                {wsConnected ? 'Connected (ws://127.0.0.1:8000/ws/alerts)' : 'Reconnecting...'}
+                {wsConnected ? 'Connected (Live Alert Stream)' : 'Reconnecting...'}
               </span>
             </div>
             <p className="text-[11px] text-slate-500">Pushes real-time alerts the second threats are ingested.</p>

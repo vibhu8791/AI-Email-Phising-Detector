@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+// Base API URL configured from environment, falling back safely to local dev
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
 
 const api = axios.create({
@@ -9,20 +10,105 @@ const api = axios.create({
   },
 });
 
-// Attach authenticated user ID to every request for strict multi-user isolation
-api.interceptors.request.use((config) => {
-  const currentUserId = localStorage.getItem('phish_user_id') || 'default_user';
-  config.headers['X-User-ID'] = currentUserId;
-  return config;
-});
+// =========================================================================
+// TOKEN & SESSION MANAGEMENT
+// =========================================================================
+
+export const getStoredToken = () => {
+  return localStorage.getItem('phish_auth_token') || '';
+};
+
+export const setStoredToken = (token) => {
+  if (token) {
+    localStorage.setItem('phish_auth_token', token);
+  } else {
+    localStorage.removeItem('phish_auth_token');
+  }
+};
 
 export const getCurrentUserId = () => {
-  return localStorage.getItem('phish_user_id') || 'default_user';
+  return localStorage.getItem('phish_user_id') || 'analyst_active';
 };
 
 export const setCurrentUserId = (userId) => {
   localStorage.setItem('phish_user_id', userId);
 };
+
+// Initialize or resume authenticated session with server
+export const initSession = async () => {
+  const existingToken = getStoredToken();
+  if (existingToken) {
+    try {
+      const res = await api.get('/auth/me');
+      if (res.data?.user_id) {
+        setCurrentUserId(res.data.user_id);
+        return res.data;
+      }
+    } catch (e) {
+      console.warn('Existing session invalid or expired, establishing new session...');
+      setStoredToken('');
+    }
+  }
+
+  // Obtain freshly signed JWT session from backend
+  try {
+    const res = await api.post('/auth/session', {
+      user_id: localStorage.getItem('phish_user_id') || undefined
+    });
+    if (res.data?.token) {
+      setStoredToken(res.data.token);
+      if (res.data.user?.user_id) {
+        setCurrentUserId(res.data.user.user_id);
+      }
+    }
+    return res.data;
+  } catch (err) {
+    console.error('Failed to initialize authenticated session:', err);
+    throw err;
+  }
+};
+
+// Attach cryptographically verified JWT Bearer token to every request
+api.interceptors.request.use((config) => {
+  const token = getStoredToken();
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Intercept 401s to automatically refresh expired sessions
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url.includes('/auth/session')) {
+      originalRequest._retry = true;
+      try {
+        setStoredToken('');
+        const session = await initSession();
+        if (session?.token) {
+          originalRequest.headers['Authorization'] = `Bearer ${session.token}`;
+          return api(originalRequest);
+        }
+      } catch (refreshErr) {
+        console.error('Session recovery failed:', refreshErr);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Helper to construct Google OAuth authorization URL without hardcoded localhost
+export const getGoogleLoginUrl = (prompt = 'select_account') => {
+  const token = getStoredToken();
+  const tokenQuery = token ? `&token=${encodeURIComponent(token)}` : '';
+  return `${API_BASE_URL}/auth/google/login?prompt=${prompt}${tokenQuery}`;
+};
+
+// =========================================================================
+// API ENDPOINTS
+// =========================================================================
 
 export const getDashboardStats = async () => {
   const res = await api.get('/dashboard/stats');
@@ -105,6 +191,9 @@ export const connectDemoMailbox = async (email = null, displayName = null) => {
 
 export const switchUser = async (userId) => {
   const res = await api.post('/auth/switch-user', { user_id: userId });
+  if (res.data?.token) {
+    setStoredToken(res.data.token);
+  }
   setCurrentUserId(userId);
   return res.data;
 };
@@ -115,4 +204,3 @@ export const resetDashboard = async () => {
 };
 
 export default api;
-
