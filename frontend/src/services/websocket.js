@@ -15,6 +15,13 @@ class ThreatWebSocket {
       return import.meta.env.VITE_WS_URL;
     }
 
+    const apiUrl = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || '').trim();
+    if (apiUrl) {
+      const wsProto = apiUrl.startsWith('https:') ? 'wss:' : 'ws:';
+      const cleanHost = apiUrl.replace(/^https?:\/\//, '').replace(/\/api\/?$/, '').replace(/\/+$/, '');
+      return `${wsProto}//${cleanHost}/ws/alerts`;
+    }
+
     if (typeof window !== 'undefined') {
       const isHttps = window.location.protocol === 'https:';
       const protocol = isHttps ? 'wss:' : 'ws:';

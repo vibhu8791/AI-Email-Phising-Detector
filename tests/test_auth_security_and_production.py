@@ -231,5 +231,29 @@ class TestAuthSecurityAndProduction(unittest.TestCase):
             settings.ENVIRONMENT = original_env
             settings.REQUIRE_PERSISTENT_DB = original_require
 
+    def test_11_oauth_route_compatibility_and_redirects(self):
+        """Verify un-prefixed OAuth routes gracefully redirect to canonical /api/auth routes preserving query params."""
+        # 1. Un-prefixed /auth/google/login redirect
+        res_login = self.client.get("/auth/google/login?prompt=select_account", follow_redirects=False)
+        self.assertEqual(res_login.status_code, 307)
+        self.assertEqual(res_login.headers["location"], "/api/auth/google/login?prompt=select_account")
+
+        # 2. Un-prefixed /auth/google/callback redirect
+        res_cb = self.client.get("/auth/google/callback?code=test_code_123&state=test_state_456", follow_redirects=False)
+        self.assertEqual(res_cb.status_code, 307)
+        self.assertEqual(res_cb.headers["location"], "/api/auth/google/callback?code=test_code_123&state=test_state_456")
+
+        # 3. Canonical /api/auth/google/login initiates Google OAuth redirect
+        orig_client_id = settings.GOOGLE_CLIENT_ID
+        try:
+            settings.GOOGLE_CLIENT_ID = "mock_client_id_123.apps.googleusercontent.com"
+            res_canonical = self.client.get("/api/auth/google/login?prompt=select_account", follow_redirects=False)
+            self.assertEqual(res_canonical.status_code, 307)
+            self.assertTrue(res_canonical.headers["location"].startswith("https://accounts.google.com/o/oauth2/v2/auth"))
+            self.assertIn("prompt=select_account", res_canonical.headers["location"])
+            self.assertIn("mock_client_id_123", res_canonical.headers["location"])
+        finally:
+            settings.GOOGLE_CLIENT_ID = orig_client_id
+
 if __name__ == "__main__":
     unittest.main()

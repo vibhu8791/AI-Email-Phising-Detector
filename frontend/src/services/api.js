@@ -1,7 +1,14 @@
 import axios from 'axios';
 
-// Base API URL configured from environment, falling back safely to local dev
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+// Normalize API base URL from environment (supports both VITE_API_URL and VITE_API_BASE_URL)
+// Strips trailing slashes and ensures the path ends with '/api' for FastAPI routing
+const rawApiUrl = (
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  'http://127.0.0.1:8000/api'
+).trim().replace(/\/+$/, '');
+
+export const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`;
 
 const api = axios.create({
   baseURL: API_BASE_URL,

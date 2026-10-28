@@ -3,7 +3,8 @@ import sys
 import logging
 from typing import Optional
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Query, Request
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Ensure root directory is on sys.path
@@ -59,6 +60,23 @@ app.add_middleware(
 app.include_router(auth.router, prefix=settings.API_V1_STR)
 app.include_router(emails.router, prefix=settings.API_V1_STR)
 app.include_router(dashboard.router, prefix=settings.API_V1_STR)
+
+# Backward-compatibility & defensive redirects for un-prefixed OAuth endpoints
+@app.get("/auth/google/login", include_in_schema=False)
+async def redirect_oauth_login(request: Request):
+    """Fallback redirect to canonical /api/auth/google/login endpoint preserving all query parameters."""
+    target_url = "/api/auth/google/login"
+    if request.url.query:
+        target_url = f"{target_url}?{request.url.query}"
+    return RedirectResponse(url=target_url, status_code=307)
+
+@app.get("/auth/google/callback", include_in_schema=False)
+async def redirect_oauth_callback(request: Request):
+    """Fallback redirect to canonical /api/auth/google/callback endpoint preserving all query parameters."""
+    target_url = "/api/auth/google/callback"
+    if request.url.query:
+        target_url = f"{target_url}?{request.url.query}"
+    return RedirectResponse(url=target_url, status_code=307)
 
 # Real-time WebSocket Endpoint for High-Priority Alerts
 @app.websocket("/ws/alerts")
