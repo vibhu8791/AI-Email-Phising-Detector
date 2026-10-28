@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy - AI Phishing Email Detection System</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #0f172a;
+      --border: #1e293b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --accent: #2563eb;
+      --accent-glow: rgba(37, 99, 235, 0.2);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      line-height: 1.65;
+      padding: 0;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+      margin-bottom: 36px;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #1e293b;
+      color: #f1f5f9;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      transition: all 0.15s ease;
+    }
+    .back-btn:hover {
+      background: #334155;
+      border-color: #475569;
+    }
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .shield-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+    .shield-icon svg { width: 22px; height: 22px; stroke: white; }
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+    .last-updated {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .highlight-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 32px 0;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+    .card-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+    .card-icon.blue { background: rgba(37, 99, 235, 0.15); stroke: #60a5fa; }
+    .card-icon.green { background: rgba(16, 185, 129, 0.15); stroke: #34d399; }
+    .card-icon.purple { background: rgba(168, 85, 247, 0.15); stroke: #c084fc; }
+    .card h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #ffffff;
+    }
+    .card p {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .policy-box {
+      background: rgba(30, 41, 59, 0.5);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .policy-box strong { color: #38bdf8; }
+    .callout-missing {
+      background: rgba(245, 158, 11, 0.08);
+      border-left: 4px solid #f59e0b;
+      padding: 12px 16px;
+      margin: 16px 0;
+      border-radius: 0 8px 8px 0;
+      font-size: 13px;
+      color: #fde68a;
+    }
+    .callout-missing strong { color: #fbbf24; }
+    section { margin-top: 36px; }
+    section h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 8px;
+    }
+    section p {
+      font-size: 14px;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+    }
+    ul {
+      margin-left: 20px;
+      margin-bottom: 16px;
+    }
+    li {
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+    li strong { color: #ffffff; }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      background: #1e293b;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #38bdf8;
+    }
+    a { color: #38bdf8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    footer {
+      margin-top: 60px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand-badge">
+        <div class="shield-icon">
+          <svg fill="none" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div>
+          <h1>Privacy Policy</h1>
+          <p class="last-updated">AI Phishing Email Detection System &bull; Last Updated: October 28, 2026</p>
+        </div>
+      </div>
+      <a href="/" class="back-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        Back to Dashboard
+      </a>
+    </header>
+
+    <div class="highlight-grid">
+      <div class="card">
+        <div class="card-icon blue">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <h3>Encrypted Token Storage</h3>
+        <p>Google OAuth access and refresh tokens are encrypted at rest with Fernet (AES-128-CBC / SHA256 HMAC). Plaintext credentials never leave the backend.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon green">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <h3>No AI Model Retraining</h3>
+        <p>User email data is strictly processed for transient security scoring. We never use your emails to train, fine-tune, or improve generalized foundation AI models.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-icon purple">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </div>
+        <h3>Revocation & Deletion</h3>
+        <p>Disconnecting an account immediately sends an OAuth revocation call to Google and removes stored credentials from our database.</p>
+      </div>
+    </div>
+
+    <section>
+      <h2>1. Overview and Application Identity</h2>
+      <p>
+        The <strong>AI Phishing Email Detection System</strong> (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;the Service&rdquo;), hosted at <a href="https://ai-email-phising-detector.onrender.com">https://ai-email-phising-detector.onrender.com</a>, is a cybersecurity monitoring application designed to help individuals and security analysts inspect incoming email communications for phishing attempts, spoofed domains, malicious links, and Business Email Compromise (BEC) patterns.
+      </p>
+      <div class="callout-missing">
+        <strong>[Configuration Notice &bull; User Input Required]:</strong>
+        Please specify your legal name or organization name, official physical/business jurisdiction, and dedicated privacy contact email (e.g. <code>privacy@your-domain.com</code>). The application is currently maintained as an open-source cybersecurity project on GitHub.
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Google API Services User Data Policy & Limited Use Disclosure</h2>
+      <div class="policy-box">
+        <p style="font-size: 13px; line-height: 1.6;">
+          <strong>Compliance with Google API Services User Data Policy:</strong><br>
+          The AI Phishing Email Detection System's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener noreferrer">Google API Services User Data Policy</a>, including the <strong>Limited Use</strong> requirements.
+        </p>
+      </div>
+      <p>In accordance with the Google Limited Use specifications:</p>
+      <ul>
+        <li><strong>Minimal Scope Requested:</strong> We only request read-only access via <code>https://www.googleapis.com/auth/gmail.readonly</code> and basic user identity via <code>https://www.googleapis.com/auth/userinfo.email</code>. We cannot send messages, delete messages from your Gmail inbox, alter your account settings, or view passwords.</li>
+        <li><strong>No General AI/LLM Training:</strong> Human email content retrieved via Google APIs is <strong>never</strong> transferred or utilized to train, retrain, or improve generalized, foundation, or commercial artificial intelligence or large language models (LLMs).</li>
+        <li><strong>No Commercial Data Reselling or Advertising:</strong> We never sell, rent, lease, or monetize your email communications. Email data is never shared with third-party advertisers, data aggregators, or marketing brokers.</li>
+        <li><strong>No Human Review:</strong> No human being reads your email contents unless you explicitly grant affirmative consent for technical troubleshooting of a false-positive detection, to comply with applicable laws, or when data is aggregated and anonymized for security auditing.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3. Information We Collect and Process</h2>
+      <p>The application only collects data strictly necessary to provide phishing detection analysis:</p>
+      <ul>
+        <li><strong>Google Profile Identity:</strong> Your email address, profile display name, and unique Google account ID, collected during Google OAuth 2.0 authorization to bind your session to an isolated workspace.</li>
+        <li><strong>Encrypted OAuth Tokens:</strong> Short-lived OAuth access tokens and offline refresh tokens provided by Google. These tokens are encrypted before storage in MongoDB using Fernet (AES-128 in CBC mode with SHA-256 HMAC). Tokens are never exposed in client-side code or browser storage.</li>
+        <li><strong>Email Metadata:</strong> Message ID, Subject line, Sender address (<code>From</code>), Recipient address (<code>To</code>), and Date/Time timestamps for the recent emails you choose to synchronize (default: 10 messages).</li>
+        <li><strong>Email Body & Link Content:</strong> Plaintext message snippets and HTML body markup extracted for algorithmic scanning. This content is analyzed to identify suspicious URLs, IP-based links, deceptive display names, urgent wire transfer language, and credential-harvesting keywords.</li>
+        <li><strong>Custom Sandbox Submissions:</strong> Any custom email subjects, senders, and body texts manually submitted into the Sandbox Scanner for on-demand analysis.</li>
+        <li><strong>Session Identifiers:</strong> Server-signed JSON Web Tokens (HS256 JWT) stored in your browser's local storage to maintain your authenticated session.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>4. How Your Email Data is Processed</h2>
+      <p>When you click <strong>Sync Gmail</strong> or submit text to the scanner, the following security pipeline runs:</p>
+      <ul>
+        <li><strong>Heuristic Security Analysis:</strong> Our engine scans extracted hyperlinks for raw IP addresses, homograph/punycode attacks, mismatched display vs destination domains, and suspicious top-level domains (.xyz, .top, .buzz, etc.). It scans body text for social engineering pressure tactics (&ldquo;urgent wire transfer&rdquo;, &ldquo;immediate account suspension&rdquo;).</li>
+        <li><strong>Machine Learning Inference:</strong> A local Scikit-learn TF-IDF vectorizer and Logistic Regression classifier evaluates text features to compute a probabilistic phishing score (0% to 100%).</li>
+        <li><strong>Composite Scoring:</strong> The system combines heuristic detections and ML probability into a Risk Score (0–100) and assigns an actionable status: <code>SAFE</code>, <code>SUSPICIOUS</code>, or <code>PHISHING</code>.</li>
+        <li><strong>Real-Time Alerts:</strong> Detected threats are logged to your personal history and broadcast to your active dashboard via WebSocket.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>5. Data Storage and Tenant Isolation</h2>
+      <p>
+        In production, scanned email records, computed risk scores, and account metadata are persisted in a MongoDB database.
+      </p>
+      <ul>
+        <li><strong>Strict Tenant Partitioning:</strong> All stored records are indexed and queried strictly by the authenticated <code>user_id</code>. No user can view, search, or access another user's email records.</li>
+        <li><strong>Cryptographic Verification:</strong> All API endpoints enforce server-side JWT Bearer token authentication. Unauthenticated requests are rejected with HTTP 401 Unauthorized.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6. Account Disconnection, Revocation & Data Deletion</h2>
+      <p>You retain complete control over your accounts and data:</p>
+      <ul>
+        <li><strong>Disconnecting Accounts:</strong> You can disconnect any connected Gmail account at any time through the Settings or Header dropdown. Upon clicking Disconnect, the backend sends a formal revocation request to <code>https://oauth2.googleapis.com/revoke</code> and immediately purges the account credentials from the database.</li>
+        <li><strong>Deleting Individual Records:</strong> Any scanned email record can be permanently deleted from the Email History view using the Delete button.</li>
+        <li><strong>Full Data Purge:</strong> You can clear all scanned email records and threat history at any time using the <strong>Danger Zone &gt; Reset Data</strong> action in Settings.</li>
+        <li><strong>Google Account Revocation:</strong> You can independently revoke access at any time directly through your <a href="https://myaccount.google.com/permissions" target="_blank" rel="noopener noreferrer">Google Account Security Settings</a>.</li>
+      </ul>
+      <div class="callout-missing">
+        <strong>[Configuration Notice &bull; Retention Timeframe]:</strong>
+        By default, scanned email records are retained until deleted or reset by the user. If you implement an automated rolling deletion policy (e.g., 30 or 60 days), update this section accordingly.
+      </div>
+    </section>
+
+    <section>
+      <h2>7. Third Parties and Sub-processors</h2>
+      <p>
+        We do not sell or lease user information. Data is only communicated to the following technical infrastructure providers necessary to host the application:
+      </p>
+      <ul>
+        <li><strong>Google APIs:</strong> For OAuth 2.0 identity verification and read-only inbox message synchronization upon user command.</li>
+        <li><strong>Render:</strong> Cloud hosting infrastructure provider for the web application and backend API, operating under TLS encryption.</li>
+        <li><strong>MongoDB:</strong> Database infrastructure for persistent storage of user records and threat detections.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>8. Inquiries and Contact Information</h2>
+      <p>
+        If you have questions, feedback, or data privacy requests concerning this Privacy Policy, please contact the repository maintainers:
+      </p>
+      <ul>
+        <li><strong>Project Repository:</strong> <a href="https://github.com/vibhu8791/AI-Email-Phising-Detector" target="_blank" rel="noopener noreferrer">GitHub: vibhu8791/AI-Email-Phising-Detector</a></li>
+        <li><strong>Issue Tracker:</strong> <a href="https://github.com/vibhu8791/AI-Email-Phising-Detector/issues" target="_blank" rel="noopener noreferrer">Submit a Privacy Inquiry</a></li>
+        <li><strong>Support Email:</strong> <em>[Missing Information: Insert maintainer email, e.g. support@your-domain.com]</em></li>
+      </ul>
+    </section>
+
+    <footer>
+      <div>
+        &copy; 2026 AI Phishing Email Detection System. All rights reserved.
+      </div>
+      <div>
+        <a href="/privacy-policy">Privacy Policy</a> &bull; 
+        <a href="/terms" style="margin-left: 8px;">Terms of Service</a> &bull; 
+        <a href="/" style="margin-left: 8px;">Dashboard</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

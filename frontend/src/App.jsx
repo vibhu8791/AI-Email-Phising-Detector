@@ -13,6 +13,7 @@ import SettingsView from './components/SettingsView';
 import SandboxScanner from './components/SandboxScanner';
 import PhishingAlertModal from './components/PhishingAlertModal';
 import EmailDetailModal from './components/EmailDetailModal';
+import Footer from './components/Footer';
 
 // Lazily loaded legal compliance views with ad-blocker immune component names
 const DataProtectionNotice = React.lazy(() => import('./components/DataProtectionNotice'));
@@ -45,8 +46,51 @@ export default function App() {
   const [selectedEmail, setSelectedEmail] = useState(null);
   const [activePhishingAlert, setActivePhishingAlert] = useState(null);
   const [bannerThreat, setBannerThreat] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Resolve initial view based on browser path (/privacy-policy or /terms)
+  const getInitialTab = () => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname.toLowerCase();
+      if (path.startsWith('/privacy')) return 'privacy';
+      if (path.startsWith('/terms')) return 'terms';
+    }
+    return 'dashboard';
+  };
+
+  const [activeTab, setActiveTab] = useState(getInitialTab);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Sync tab with browser URL history
+  const navigateToTab = useCallback((tab, path = null) => {
+    setActiveTab(tab);
+    setMobileOpen(false);
+    if (path) {
+      window.history.pushState({}, '', path);
+    } else if (tab === 'privacy') {
+      window.history.pushState({}, '', '/privacy-policy');
+    } else if (tab === 'terms') {
+      window.history.pushState({}, '', '/terms');
+    } else if (tab === 'dashboard') {
+      window.history.pushState({}, '', '/');
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // Listen for browser Back / Forward buttons
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname.toLowerCase();
+      if (path.startsWith('/privacy')) {
+        setActiveTab('privacy');
+      } else if (path.startsWith('/terms')) {
+        setActiveTab('terms');
+      } else {
+        setActiveTab('dashboard');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Load stats
   const fetchStats = useCallback(async () => {
@@ -221,7 +265,7 @@ export default function App() {
       />
 
       {/* 2. Main Layout Area (Offset on desktop for sidebar) */}
-      <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
+      <div className="flex-1 lg:pl-64 flex flex-col min-w-0 min-h-screen">
         {/* Top Header */}
         <TopHeader
           stats={stats}
@@ -365,16 +409,19 @@ export default function App() {
 
           {activeTab === 'privacy' && (
             <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-500 font-medium">Loading Privacy Policy...</div>}>
-              <DataProtectionNotice onBack={() => setActiveTab('dashboard')} />
+              <DataProtectionNotice onBack={() => navigateToTab('dashboard', '/')} />
             </React.Suspense>
           )}
 
           {activeTab === 'terms' && (
             <React.Suspense fallback={<div className="p-8 text-center text-xs text-slate-500 font-medium">Loading Terms of Service...</div>}>
-              <ServiceTermsNotice onBack={() => setActiveTab('dashboard')} />
+              <ServiceTermsNotice onBack={() => navigateToTab('dashboard', '/')} />
             </React.Suspense>
           )}
         </main>
+
+        {/* Website Footer with Public Policy Links */}
+        <Footer onNavigate={navigateToTab} />
       </div>
 
       {/* Real-Time WebSocket Phishing Alert Modal */}

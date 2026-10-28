@@ -91,25 +91,31 @@ export default function Sidebar({
           </nav>
 
           {/* Legal / Policy Links for Google Verification Compliance */}
-          <div className="px-6 py-2 space-y-1 border-t border-slate-800/60 text-xs">
-            <button
-              onClick={() => {
+          <div className="px-6 py-2.5 space-y-1.5 border-t border-slate-800/60 text-xs">
+            <a
+              href="/privacy-policy"
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                e.preventDefault();
                 setActiveTab('privacy');
                 setMobileOpen(false);
               }}
               className={`block w-full text-left text-xs transition-colors ${activeTab === 'privacy' ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'}`}
             >
               Privacy Policy
-            </button>
-            <button
-              onClick={() => {
+            </a>
+            <a
+              href="/terms"
+              onClick={(e) => {
+                if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+                e.preventDefault();
                 setActiveTab('terms');
                 setMobileOpen(false);
               }}
               className={`block w-full text-left text-xs transition-colors ${activeTab === 'terms' ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-slate-200'}`}
             >
               Terms of Service
-            </button>
+            </a>
           </div>
         </div>
 
