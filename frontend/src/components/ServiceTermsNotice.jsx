@@ -2,6 +2,8 @@ import React from 'react';
 import { FileText, AlertTriangle, ArrowLeft, ShieldAlert, CheckCircle, ExternalLink } from 'lucide-react';
 
 export default function ServiceTermsNotice({ onBack }) {
+  const currentOrigin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://ai-email-phising-detector.vercel.app';
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 space-y-8 animate-fadeIn text-slate-800">
       {/* Back Button */}
@@ -49,9 +51,9 @@ export default function ServiceTermsNotice({ onBack }) {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-slate-900">1. Acceptance of Terms</h2>
           <p>
-            By accessing or using the <strong>AI Phishing Email Detection System</strong> (&ldquo;Service&rdquo;), hosted at{' '}
-            <a href="https://ai-email-phising-detector.onrender.com" className="text-blue-600 underline font-medium">
-              https://ai-email-phising-detector.onrender.com
+            By accessing or using the <strong>AI Phishing Email Detection System</strong> (&ldquo;Service&rdquo;), accessible at{' '}
+            <a href={currentOrigin} className="text-blue-600 underline font-medium">
+              {currentOrigin}
             </a>
             , you confirm that you have read, understood, and agreed to be bound by these Terms of Service. If you do not agree to these terms, you must discontinue using the application immediately.
           </p>

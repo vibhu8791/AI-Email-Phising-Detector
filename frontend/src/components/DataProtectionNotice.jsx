@@ -2,6 +2,8 @@ import React from 'react';
 import { ShieldCheck, Lock, EyeOff, Trash2, ArrowLeft, ExternalLink, AlertTriangle, Database, Server, UserCheck } from 'lucide-react';
 
 export default function DataProtectionNotice({ onBack }) {
+  const currentOrigin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://ai-email-phising-detector.vercel.app';
+
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 space-y-8 animate-fadeIn text-slate-800">
       {/* Back Button */}
@@ -69,9 +71,9 @@ export default function DataProtectionNotice({ onBack }) {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-slate-900">1. Overview and Application Identity</h2>
           <p>
-            The <strong>AI Phishing Email Detection System</strong> (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;the Service&rdquo;), hosted at{' '}
-            <a href="https://ai-email-phising-detector.onrender.com" className="text-blue-600 underline font-medium">
-              https://ai-email-phising-detector.onrender.com
+            The <strong>AI Phishing Email Detection System</strong> (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;the Service&rdquo;), accessible at{' '}
+            <a href={currentOrigin} className="text-blue-600 underline font-medium">
+              {currentOrigin}
             </a>
             , is a cybersecurity monitoring platform that assists users and security analysts in identifying phishing attacks, spoofed sender domains, credential-harvesting links, and Business Email Compromise (BEC) fraud.
           </p>

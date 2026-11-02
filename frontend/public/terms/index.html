@@ -197,7 +197,7 @@
     <section>
       <h2>1. Acceptance of Terms</h2>
       <p>
-        By accessing or using the <strong>AI Phishing Email Detection System</strong> (&ldquo;Service&rdquo;), hosted at <a href="https://ai-email-phising-detector.onrender.com">https://ai-email-phising-detector.onrender.com</a>, you confirm that you have read, understood, and agreed to be bound by these Terms of Service. If you do not agree to these terms, you must discontinue using the application immediately.
+        By accessing or using the <strong>AI Phishing Email Detection System</strong> (&ldquo;Service&rdquo;), accessible at <a href="https://ai-email-phising-detector.onrender.com" id="site-url">https://ai-email-phising-detector.onrender.com</a>, you confirm that you have read, understood, and agreed to be bound by these Terms of Service. If you do not agree to these terms, you must discontinue using the application immediately.
       </p>
       <div class="callout-missing">
         <strong>[Configuration Notice &bull; User Input Required]:</strong>
@@ -310,5 +310,11 @@
       </div>
     </footer>
   </div>
+  <script>
+    if (typeof window !== 'undefined' && window.location.origin) {
+      var el = document.getElementById('site-url');
+      if (el) { el.href = window.location.origin; el.textContent = window.location.origin; }
+    }
+  </script>
 </body>
 </html>

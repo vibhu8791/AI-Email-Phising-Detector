@@ -276,7 +276,7 @@
     <section>
       <h2>1. Overview and Application Identity</h2>
       <p>
-        The <strong>AI Phishing Email Detection System</strong> (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;the Service&rdquo;), hosted at <a href="https://ai-email-phising-detector.onrender.com">https://ai-email-phising-detector.onrender.com</a>, is a cybersecurity monitoring platform that assists users and security analysts in identifying phishing attacks, spoofed sender domains, credential-harvesting links, and Business Email Compromise (BEC) fraud.
+        The <strong>AI Phishing Email Detection System</strong> (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;the Service&rdquo;), accessible at <a href="https://ai-email-phising-detector.onrender.com" id="site-url">https://ai-email-phising-detector.onrender.com</a>, is a cybersecurity monitoring platform that assists users and security analysts in identifying phishing attacks, spoofed sender domains, credential-harvesting links, and Business Email Compromise (BEC) fraud.
       </p>
       <div class="callout-missing">
         <strong>[Configuration Notice &bull; User Input Required]:</strong>
@@ -497,5 +497,11 @@
       </div>
     </footer>
   </div>
+  <script>
+    if (typeof window !== 'undefined' && window.location.origin) {
+      var el = document.getElementById('site-url');
+      if (el) { el.href = window.location.origin; el.textContent = window.location.origin; }
+    }
+  </script>
 </body>
 </html>
