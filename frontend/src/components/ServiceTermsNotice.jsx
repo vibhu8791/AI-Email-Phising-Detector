@@ -26,7 +26,7 @@ export default function ServiceTermsNotice({ onBack }) {
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Terms of Service</h1>
             <p className="text-xs text-slate-500 font-medium">
-              AI Phishing Email Detection System &bull; Last Updated: October 28, 2026
+              AI Phishing Shield (AI Phishing Email Detection System) &bull; Last Updated: November 2, 2026
             </p>
           </div>
         </div>
@@ -51,16 +51,16 @@ export default function ServiceTermsNotice({ onBack }) {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-slate-900">1. Acceptance of Terms</h2>
           <p>
-            By accessing or using the <strong>AI Phishing Email Detection System</strong> (&ldquo;Service&rdquo;), accessible at{' '}
+            By accessing or using <strong>AI Phishing Shield</strong> (officially titled the <strong>AI Phishing Email Detection System</strong>; hereinafter &ldquo;the Service&rdquo;), accessible at{' '}
             <a href={currentOrigin} className="text-blue-600 underline font-medium">
               {currentOrigin}
             </a>
             , you confirm that you have read, understood, and agreed to be bound by these Terms of Service. If you do not agree to these terms, you must discontinue using the application immediately.
           </p>
-          <div className="p-3 bg-amber-50/70 border-l-4 border-amber-500 rounded-r-lg text-xs text-amber-900 space-y-1">
-            <p className="font-bold text-amber-800">[Configuration Notice &bull; User Input Required]:</p>
+          <div className="p-3 bg-blue-50/70 border-l-4 border-blue-500 rounded-r-lg text-xs text-blue-900 space-y-1">
+            <p className="font-bold text-blue-800">Application Maintainer &amp; Jurisdiction:</p>
             <p>
-              Please specify your legal entity or maintainer name, official contact email, and governing jurisdiction.
+              Maintained by <strong>Vibhu Agarwal</strong> (India). For service inquiries, contact <a href="mailto:vibhuagarwal2006@gmail.com" className="text-blue-600 underline">vibhuagarwal2006@gmail.com</a>.
             </p>
           </div>
         </section>

@@ -4,11 +4,27 @@
   "installCommand": "cd frontend && npm install",
   "rewrites": [
     {
+      "source": "/robots.txt",
+      "destination": "/robots.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/sitemap.xml"
+    },
+    {
       "source": "/privacy-policy",
       "destination": "/privacy-policy/index.html"
     },
     {
+      "source": "/privacy-policy/",
+      "destination": "/privacy-policy/index.html"
+    },
+    {
       "source": "/terms",
+      "destination": "/terms/index.html"
+    },
+    {
+      "source": "/terms/",
       "destination": "/terms/index.html"
     },
     {

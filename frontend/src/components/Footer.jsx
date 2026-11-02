@@ -22,7 +22,7 @@ export default function Footer({ onNavigate }) {
                 <ShieldCheck className="w-4 h-4 stroke-[2.2]" />
               </div>
               <span className="font-bold text-slate-800 text-sm tracking-tight">
-                AI Phishing Email Detection System
+                AI Phishing Shield (AI Phishing Email Detection System)
               </span>
             </div>
             <p className="text-slate-500 text-xs leading-relaxed max-w-md">

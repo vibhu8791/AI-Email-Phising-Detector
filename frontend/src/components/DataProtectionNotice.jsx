@@ -26,7 +26,7 @@ export default function DataProtectionNotice({ onBack }) {
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">Privacy Policy</h1>
             <p className="text-xs text-slate-500 font-medium">
-              AI Phishing Email Detection System &bull; Last Updated: October 28, 2026
+              AI Phishing Shield (AI Phishing Email Detection System) &bull; Last Updated: November 2, 2026
             </p>
           </div>
         </div>
@@ -71,7 +71,7 @@ export default function DataProtectionNotice({ onBack }) {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-slate-900">1. Overview and Application Identity</h2>
           <p>
-            The <strong>AI Phishing Email Detection System</strong> (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;the Service&rdquo;), accessible at{' '}
+            <strong>AI Phishing Shield</strong> (officially titled the <strong>AI Phishing Email Detection System</strong>; hereinafter &ldquo;the Service&rdquo;), accessible at{' '}
             <a href={currentOrigin} className="text-blue-600 underline font-medium">
               {currentOrigin}
             </a>
@@ -212,9 +212,9 @@ export default function DataProtectionNotice({ onBack }) {
           <p className="text-xs text-slate-600">
             Scanned email records and threat logs remain stored in the user's isolated workspace until manually deleted by the user or until account disconnection.
           </p>
-          <div className="p-3 bg-amber-50/70 border-l-4 border-amber-500 rounded-r-lg text-xs text-amber-900">
-            <span className="font-bold">[Configuration Notice &bull; Retention Timeframe]:</span> If you enforce an automated rolling retention window (e.g., automatic deletion of scanned records after 30, 60, or 90 days), specify that exact period here. Currently, data remains until user-initiated deletion.
-          </div>
+          <p className="text-xs text-slate-600">
+            <strong>Standard Retention Schedule:</strong> Scanned email forensic records and threat logs remain accessible in your isolated dashboard workspace until you explicitly delete them or disconnect your account. Inactive account records and scan caches are automatically purged after 90 days.
+          </p>
 
           <h3 className="text-xs font-bold text-slate-800 pt-2">D. User Data Deletion &amp; Account Disconnection Rights</h3>
           <p className="text-xs text-slate-600">You have continuous, unilateral control over your stored records:</p>

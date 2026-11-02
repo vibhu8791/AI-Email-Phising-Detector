@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /privacy-policy
+Allow: /terms
+Allow: /google7228a048395d234f.html
+
+Sitemap: https://www.emailphisingdetector.online/sitemap.xml
