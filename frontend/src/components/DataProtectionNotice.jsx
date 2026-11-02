@@ -77,10 +77,10 @@ export default function DataProtectionNotice({ onBack }) {
             </a>
             , is a cybersecurity monitoring platform that assists users and security analysts in identifying phishing attacks, spoofed sender domains, credential-harvesting links, and Business Email Compromise (BEC) fraud.
           </p>
-          <div className="p-3 bg-amber-50/70 border-l-4 border-amber-500 rounded-r-lg text-xs text-amber-900 space-y-1">
-            <p className="font-bold text-amber-800">[Configuration Notice &bull; User Input Required]:</p>
+          <div className="p-3 bg-blue-50/70 border-l-4 border-blue-500 rounded-r-lg text-xs text-blue-900 space-y-1">
+            <p className="font-bold text-blue-800">Application Maintainer &amp; Contact:</p>
             <p>
-              Please specify your legal name or organization name, official business/physical jurisdiction, and dedicated privacy inquiry email address (e.g., <code>privacy@your-domain.com</code>). Currently maintained as an open-source cybersecurity project on GitHub.
+              Developed and maintained by <strong>Vibhu Agarwal</strong> (India). For privacy inquiries, contact <a href="mailto:vibhuagarwal2006@gmail.com" className="text-blue-600 underline">vibhuagarwal2006@gmail.com</a>.
             </p>
           </div>
         </section>

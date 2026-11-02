@@ -278,9 +278,10 @@
       <p>
         The <strong>AI Phishing Email Detection System</strong> (&ldquo;we&rdquo;, &ldquo;our&rdquo;, or &ldquo;the Service&rdquo;), accessible at <a href="https://emailphisingdetector.online" id="site-url">https://emailphisingdetector.online</a>, is a cybersecurity monitoring platform that assists users and security analysts in identifying phishing attacks, spoofed sender domains, credential-harvesting links, and Business Email Compromise (BEC) fraud.
       </p>
-      <div class="callout-missing">
-        <strong>[Configuration Notice &bull; User Input Required]:</strong>
-        Please specify your legal name or organization name, official business/physical jurisdiction, and dedicated privacy inquiry email address (e.g., <code>privacy@your-domain.com</code>). Currently maintained as an open-source cybersecurity project on GitHub.
+      <div class="card" style="margin-top: 16px; border-left: 4px solid var(--accent); background: rgba(37, 99, 235, 0.05);">
+        <p style="font-size: 13px; color: var(--text);">
+          <strong>Application Maintainer:</strong> This cybersecurity platform is developed and maintained by <strong>Vibhu Agarwal</strong> (India). For data protection inquiries, email <a href="mailto:vibhuagarwal2006@gmail.com">vibhuagarwal2006@gmail.com</a>.
+        </p>
       </div>
     </section>
 
@@ -401,10 +402,9 @@
       <p>
         Scanned email records and threat logs remain stored in the user's isolated workspace until manually deleted by the user or until account disconnection.
       </p>
-      <div class="callout-missing">
-        <strong>[Configuration Notice &bull; Retention Timeframe]:</strong>
-        If you enforce an automated rolling retention window (e.g., automatic deletion of scanned records after 30, 60, or 90 days), specify that exact period here. Currently, data remains until user-initiated deletion.
-      </div>
+      <p style="margin-top: 10px;">
+        <strong>Standard Retention Schedule:</strong> Scanned email forensic records remain accessible in your isolated dashboard workspace until you explicitly delete them or disconnect your account. Inactive account records and scan caches are retained for a maximum of 90 days.
+      </p>
 
       <h3>D. User Data Deletion &amp; Account Disconnection Rights</h3>
       <p>You have continuous, unilateral control over your stored records:</p>
@@ -429,7 +429,8 @@
       </p>
       <ul>
         <li><strong>Google APIs:</strong> For OAuth 2.0 authentication and read-only inbox message synchronization upon user command.</li>
-        <li><strong>Render (Render Services Inc.):</strong> Cloud infrastructure provider hosting the web application frontend and backend API under TLS encryption.</li>
+        <li><strong>Vercel Inc.:</strong> Edge cloud hosting provider serving the frontend Single Page Application (SPA) over HTTPS.</li>
+        <li><strong>Render (Render Services Inc.):</strong> Cloud infrastructure provider hosting the backend API under TLS encryption.</li>
         <li><strong>MongoDB (MongoDB Inc.):</strong> Cloud database provider storing encrypted account tokens and isolated email scan records.</li>
       </ul>
       <p>
