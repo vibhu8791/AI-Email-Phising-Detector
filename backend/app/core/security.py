@@ -106,7 +106,7 @@ def verify_access_token(token: str) -> Optional[Dict[str, Any]]:
 # TAMPER-PROOF OAUTH STATE (CSRF & USER BINDING)
 # =========================================================================
 
-def generate_oauth_state(user_id: str, action: str = "connect_gmail") -> str:
+def generate_oauth_state(user_id: str, action: str = "connect_gmail", redirect_origin: Optional[str] = None) -> str:
     """
     Generate a tamper-proof, time-bound OAuth state token bound to the requesting user_id.
     Prevents CSRF and links callback securely to the initiating application user.
@@ -114,6 +114,7 @@ def generate_oauth_state(user_id: str, action: str = "connect_gmail") -> str:
     payload = {
         "user_id": user_id,
         "action": action,
+        "redirect_origin": redirect_origin,
         "nonce": uuid.uuid4().hex,
         "created_at": time.time()
     }

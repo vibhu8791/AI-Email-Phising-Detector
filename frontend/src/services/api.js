@@ -110,7 +110,10 @@ api.interceptors.response.use(
 export const getGoogleLoginUrl = (prompt = 'select_account') => {
   const token = getStoredToken();
   const tokenQuery = token ? `&token=${encodeURIComponent(token)}` : '';
-  return `${API_BASE_URL}/auth/google/login?prompt=${prompt}${tokenQuery}`;
+  const originQuery = typeof window !== 'undefined' && window.location.origin
+    ? `&redirect_origin=${encodeURIComponent(window.location.origin)}`
+    : '';
+  return `${API_BASE_URL}/auth/google/login?prompt=${prompt}${tokenQuery}${originQuery}`;
 };
 
 // =========================================================================

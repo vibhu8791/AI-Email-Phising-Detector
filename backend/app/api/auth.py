@@ -171,22 +171,45 @@ async def create_or_refresh_session(
 
 @router.get("/google/login")
 async def google_login(
+    request: Request,
     prompt: Optional[str] = Query("select_account"),
     token: Optional[str] = Query(None),
+    redirect_origin: Optional[str] = Query(None),
     current_user: Optional[UserSession] = Depends(get_optional_current_user)
 ):
     """
     Initiate Google OAuth 2.0 authorization.
-    Binds the state parameter to the verified application user.
+    Binds the state parameter to the verified application user and originating frontend domain.
     If unauthenticated, prepares an initial Google Sign-In binding.
     """
+    # Dynamically resolve and validate initiating frontend origin
+    target_origin = None
+    allowed_origins = [o.rstrip("/") for o in settings.resolved_cors_origins]
+    if redirect_origin:
+        clean = redirect_origin.strip().rstrip("/")
+        if clean in allowed_origins:
+            target_origin = clean
+    if not target_origin:
+        referer = request.headers.get("referer")
+        if referer:
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(referer)
+                ref_origin = f"{parsed.scheme}://{parsed.netloc}".rstrip("/")
+                if ref_origin in allowed_origins:
+                    target_origin = ref_origin
+            except Exception:
+                pass
+
+    fallback_frontend = target_origin or settings.FRONTEND_REDIRECT_URL
+
     if not settings.GOOGLE_CLIENT_ID or settings.GOOGLE_CLIENT_ID == "YOUR_GOOGLE_CLIENT_ID":
-        return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=MissingClientID")
+        return RedirectResponse(f"{fallback_frontend}?auth_error=MissingClientID")
 
     # In production mode, ensure GOOGLE_REDIRECT_URI does not point to localhost
     if settings.is_production and any(loc in settings.GOOGLE_REDIRECT_URI for loc in ("localhost", "127.0.0.1")):
         logger.error(f"Cannot initiate Google OAuth: GOOGLE_REDIRECT_URI points to localhost in production: {settings.GOOGLE_REDIRECT_URI}")
-        return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=LocalhostRedirectInProduction")
+        return RedirectResponse(f"{fallback_frontend}?auth_error=LocalhostRedirectInProduction")
 
     # Determine initiating user identity
     active_user = current_user
@@ -204,8 +227,8 @@ async def google_login(
         user_id = f"user_{uuid.uuid4().hex[:10]}"
         action = "google_login"
 
-    # Generate tamper-proof, time-bound OAuth state bound to user_id
-    state_token = generate_oauth_state(user_id=user_id, action=action)
+    # Generate tamper-proof, time-bound OAuth state bound to user_id and originating domain
+    state_token = generate_oauth_state(user_id=user_id, action=action, redirect_origin=target_origin)
     scope_str = "%20".join(SCOPES)
 
     auth_url = (
@@ -234,22 +257,26 @@ async def google_oauth_callback(
     4. Encrypts tokens at rest with Fernet (never exposed to frontend).
     5. Issues server-signed application JWT for the user session.
     """
+    state_data = verify_oauth_state(state) if state else None
+
+    # Dynamically resolve destination frontend URL (preserves exact originating domain)
+    target_frontend = settings.FRONTEND_REDIRECT_URL
+    if state_data and state_data.get("redirect_origin"):
+        cand = state_data["redirect_origin"].strip().rstrip("/")
+        if cand in [o.rstrip("/") for o in settings.resolved_cors_origins]:
+            target_frontend = cand
+
     if error:
         logger.error(f"Google OAuth error returned: {error}")
-        return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error={error}")
+        return RedirectResponse(f"{target_frontend}?auth_error={error}")
 
     if not code:
         raise HTTPException(status_code=400, detail="Missing authorization code.")
 
     # Validate state parameter and verify cryptographic integrity
-    if not state:
-        logger.warning("Missing OAuth state parameter in callback.")
-        return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=MissingState")
-
-    state_data = verify_oauth_state(state)
-    if not state_data or not state_data.get("user_id"):
+    if not state or not state_data or not state_data.get("user_id"):
         logger.warning("Invalid or expired OAuth state token received.")
-        return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=InvalidOrExpiredState")
+        return RedirectResponse(f"{target_frontend}?auth_error=InvalidOrExpiredState")
 
     destination_user_id = state_data["user_id"]
     action = state_data.get("action", "connect_gmail")
@@ -268,7 +295,7 @@ async def google_oauth_callback(
 
         if "error" in tokens:
             logger.error(f"Token exchange error: {tokens.get('error')}")
-            return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error={tokens.get('error_description', tokens.get('error'))}")
+            return RedirectResponse(f"{target_frontend}?auth_error={tokens.get('error_description', tokens.get('error'))}")
 
         access_token = tokens.get("access_token")
         refresh_token = tokens.get("refresh_token")
@@ -321,12 +348,12 @@ async def google_oauth_callback(
 
         logger.info(f"Successfully bound Google account {user_email} to application user {effective_user_id}")
         return RedirectResponse(
-            f"{settings.FRONTEND_REDIRECT_URL}?auth=success&token={app_jwt}&account={user_email}&user_id={effective_user_id}"
+            f"{target_frontend}?auth=success&token={app_jwt}&account={user_email}&user_id={effective_user_id}"
         )
 
     except Exception as e:
         logger.error(f"Exception during Google OAuth callback: {e}")
-        return RedirectResponse(f"{settings.FRONTEND_REDIRECT_URL}?auth_error=InternalServerError")
+        return RedirectResponse(f"{target_frontend}?auth_error=InternalServerError")
 
 # =========================================================================
 # PROTECTED ACCOUNT MANAGEMENT ENDPOINTS
