@@ -2,7 +2,7 @@ import React from 'react';
 import { ShieldCheck, Lock, EyeOff, Trash2, ArrowLeft, ExternalLink, AlertTriangle, Database, Server, UserCheck } from 'lucide-react';
 
 export default function DataProtectionNotice({ onBack }) {
-  const currentOrigin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://ai-email-phising-detector.vercel.app';
+  const currentOrigin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://emailphisingdetector.online';
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 space-y-8 animate-fadeIn text-slate-800">
@@ -286,9 +286,9 @@ export default function DataProtectionNotice({ onBack }) {
           <ul className="list-disc pl-5 space-y-1 text-xs text-slate-600">
             <li><strong>Project Repository:</strong> <a href="https://github.com/vibhu8791/AI-Email-Phising-Detector" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">github.com/vibhu8791/AI-Email-Phising-Detector</a></li>
             <li><strong>Issue Tracker:</strong> <a href="https://github.com/vibhu8791/AI-Email-Phising-Detector/issues" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">Submit a Privacy Request / Issue</a></li>
-            <li><strong>Contact Email:</strong> <em>[Missing Information: Insert maintainer/support email, e.g., privacy@your-domain.com]</em></li>
-            <li><strong>Developer / Entity Name:</strong> <em>[Missing Information: Insert full legal name or organization name]</em></li>
-            <li><strong>Mailing Address / Jurisdiction:</strong> <em>[Missing Information: Insert business city/state/country]</em></li>
+            <li><strong>Contact Email:</strong> <em>vibhuagarwal2006@gmail.com</em></li>
+            <li><strong>Developer / Entity Name:</strong> <em>Vibhu Agarwal (Project Maintainer)</em></li>
+            <li><strong>Mailing Address / Jurisdiction:</strong> <em>India</em></li>
           </ul>
         </section>
       </div>

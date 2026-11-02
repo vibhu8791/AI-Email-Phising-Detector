@@ -29,7 +29,10 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
-        "http://127.0.0.1:3000"
+        "http://127.0.0.1:3000",
+        "https://emailphisingdetector.online",
+        "https://www.emailphisingdetector.online",
+        "https://ai-email-phising-detector.vercel.app"
     ]
     
     # Google OAuth 2.0 Credentials
@@ -108,7 +111,7 @@ class Settings(BaseSettings):
 
         # If running on Render, default to known production frontend if unset/localhost
         if is_local and (os.getenv("RENDER") or os.getenv("RENDER_EXTERNAL_URL")):
-            return "https://ai-email-phising-detector.onrender.com"
+            return "https://emailphisingdetector.online"
 
         # Prevent silent fallback to localhost in production mode
         if is_local and self.is_production:

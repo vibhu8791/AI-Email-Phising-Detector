@@ -2,7 +2,7 @@ import React from 'react';
 import { FileText, AlertTriangle, ArrowLeft, ShieldAlert, CheckCircle, ExternalLink } from 'lucide-react';
 
 export default function ServiceTermsNotice({ onBack }) {
-  const currentOrigin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://ai-email-phising-detector.vercel.app';
+  const currentOrigin = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://emailphisingdetector.online';
 
   return (
     <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 space-y-8 animate-fadeIn text-slate-800">
@@ -153,7 +153,7 @@ export default function ServiceTermsNotice({ onBack }) {
           </p>
           <ul className="list-disc pl-5 space-y-1.5 text-xs text-slate-600">
             <li><strong>GitHub Repository:</strong> <a href="https://github.com/vibhu8791/AI-Email-Phising-Detector" target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">github.com/vibhu8791/AI-Email-Phising-Detector</a></li>
-            <li><strong>Support Email:</strong> <em>[Missing Information: Insert maintainer email, e.g. support@your-domain.com]</em></li>
+            <li><strong>Support Email:</strong> <em>vibhuagarwal2006@gmail.com</em></li>
           </ul>
         </section>
       </div>
